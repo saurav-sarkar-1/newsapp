@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>News Hub - AI News & Indian Stock Market</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div class="app">
+        <header class="app-header">
+            <div class="container">
+                <h1 id="mainTitle">📰 News Hub</h1>
+                <p class="subtitle" id="mainSubtitle">Latest News & Updates</p>
+                <button class="btn btn-primary" id="refreshBtn">🔄 Refresh News</button>
+            </div>
+        </header>
+
+        <main class="container">
+            <div id="topLevelTabs" class="top-level-tabs">
+                <button class="top-tab active" data-news-type="ai">🤖 AI News</button>
+                <button class="top-tab" data-news-type="stock-market">📈 Indian Stock Market</button>
+            </div>
+
+            <div id="loading" class="loading">
+                <div class="spinner"></div>
+                <p id="loadingText">Loading latest news...</p>
+            </div>
+
+            <div id="categoryTabs" class="category-tabs" style="display: none;">
+                <button class="category-tab active" data-category="All">All</button>
+            </div>
+
+            <div id="newsContainer" class="news-container"></div>
+        </main>
+    </div>
+
+    <script src="js/app.js"></script>
+</body>
+</html>
