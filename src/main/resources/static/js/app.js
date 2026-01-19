@@ -153,6 +153,23 @@ function createNewsCard(article) {
     const category = article.category || 'General';
     const categoryClass = category.toLowerCase();
 
+    // Validate and prepare URL
+    let articleUrl = article.url || '';
+    let linkHtml = '';
+    
+    if (articleUrl && articleUrl.trim() !== '' && articleUrl !== 'null' && 
+        (articleUrl.startsWith('http://') || articleUrl.startsWith('https://'))) {
+        // URL is valid - use it directly (don't escape HTML for URLs)
+        linkHtml = `<a href="${articleUrl}" target="_blank" rel="noopener noreferrer" class="news-link">
+                Read Full Article →
+            </a>`;
+    } else {
+        // URL is invalid or missing - show message or disable link
+        linkHtml = `<div class="news-link" style="opacity: 0.6; cursor: not-allowed;">
+                Article link not available
+            </div>`;
+    }
+
     return `
         <div class="news-card">
             ${image}
@@ -166,9 +183,7 @@ function createNewsCard(article) {
             </div>
             <div class="news-summary">${escapeHtml(article.summary || article.description || 'No summary available')}</div>
             ${author}
-            <a href="${escapeHtml(article.url)}" target="_blank" rel="noopener noreferrer" class="news-link">
-                Read Full Article →
-            </a>
+            ${linkHtml}
         </div>
     `;
 }
