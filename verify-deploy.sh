@@ -16,10 +16,12 @@ fi
 # Check Dockerfile
 echo ""
 echo "✅ Dockerfile:"
-if grep -q "ai-news-app-1.0.0.jar" Dockerfile; then
-    echo "   ✓ Copying correct JAR file"
+if grep -q "COPY --from=build /app/target/\*.jar" Dockerfile; then
+    echo "   ✓ Copying JAR files with wildcard (flexible)"
+elif grep -q "ai-news-app-1.0.0.jar" Dockerfile; then
+    echo "   ✓ Copying explicit JAR file"
 else
-    echo "   ✗ JAR file name mismatch - FIX NEEDED"
+    echo "   ✗ JAR file copy not found - FIX NEEDED"
     exit 1
 fi
 

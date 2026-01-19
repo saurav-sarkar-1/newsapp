@@ -12,16 +12,25 @@ RUN mvn clean package -DskipTests && \
     echo "=== Build complete ===" && \
     ls -la target/ && \
     echo "=== JAR files in target ===" && \
-    find target -name "*.jar" -type f
+    find target -name "*.jar" -type f && \
+    echo "=== Finding executable JAR (excluding .original) ===" && \
+    find target -name "*.jar" -not -name "*.original" -type f
 
 # Runtime stage
 FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
 
-# Copy only the executable JAR (not the .original)
-COPY --from=build /app/target/ai-news-app-1.0.0.jar app.jar
+# Copy all non-.original JAR files and rename to app.jar
+# Using a shell to handle the copy with exclusion
+COPY --from=build /app/target/*.jar ./
 
-# Expose port (Railway will set PORT env var)
+# Keep only the non-.original file and rename it
+RUN rm -f *.original && \
+    mv *.jar app.jar && \
+    ls -lh app.jar && \
+    echo "JAR file ready: app.jar"
+
+# Expose port
 EXPOSE 8080
 
 # Run the application
