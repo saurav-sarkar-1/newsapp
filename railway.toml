@@ -1,0 +1,10 @@
+# Railway Configuration
+# This file tells Railway to ONLY use the Dockerfile
+# and ignore any auto-detection from pom.xml or other files
+
+[build]
+builder = "DOCKERFILE"
+
+[deploy]
+dockerfilePath = "Dockerfile"
+
