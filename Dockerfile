@@ -8,5 +8,6 @@ RUN mvn clean package -DskipTests
 FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
 COPY --from=build /app/target/ai-news-app-1.0.0.jar app.jar
-EXPOSE 8080
-ENTRYPOINT ["java", "-jar", "app.jar"]
+EXPOSE ${PORT:-8080}
+ENV PORT=${PORT:-8080}
+ENTRYPOINT ["sh", "-c", "java -jar app.jar"]
