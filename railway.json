@@ -4,6 +4,6 @@
     "builder": "RAILPACK"
   },
   "deploy": {
-    "startCommand": "java -jar target/ai-news-app-1.0.0.jar"
+    "startCommand": "bash start.sh"
   }
 }
