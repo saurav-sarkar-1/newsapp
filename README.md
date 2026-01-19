@@ -4,7 +4,7 @@ A Java Spring Boot application that fetches and displays the latest news about A
 
 ## 🌐 Live Application
 
-**The app is now live and available at:** [https://ai-news-app-production.up.railway.app/](https://ai-news-app-production.up.railway.app/)
+**The app is now live and available at:** [https://newsapp-production-b399.up.railway.app/](https://newsapp-production-b399.up.railway.app/)
 
 You can access the application directly from your browser without any local setup!
 
@@ -100,7 +100,7 @@ java -jar target/ai-news-app-1.0.0.jar
 
 ### Using the Live Application
 
-1. **Access the Live App**: Visit [https://ai-news-app-production.up.railway.app/](https://ai-news-app-production.up.railway.app/)
+1. **Access the Live App**: Visit [https://newsapp-production-b399.up.railway.app/](https://newsapp-production-b399.up.railway.app/)
 2. **Switch News Types**: Use the top tabs to switch between "🤖 AI News" and "📈 Indian Stock Market"
 3. **Filter by Category**: Click category tabs (Product, Engineering, Strategy, etc.) to filter news
 4. **View News**: The app automatically loads the latest news articles
