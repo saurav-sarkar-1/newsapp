@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 # Startup script for Railway deployment
 
 # Find the JAR file in target directory
