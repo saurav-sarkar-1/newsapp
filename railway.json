@@ -4,6 +4,6 @@
     "builder": "RAILPACK"
   },
   "deploy": {
-    "startCommand": "bash start.sh"
+    "startCommand": "java -jar $(find target -name 'ai-news-app-*.jar' -type f | head -1)"
   }
 }
