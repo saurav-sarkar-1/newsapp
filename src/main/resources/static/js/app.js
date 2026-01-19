@@ -39,18 +39,18 @@ function updateHeader(newsType) {
     
     if (newsType === 'ai') {
         titleEl.textContent = '🤖 AI News';
-        subtitleEl.textContent = 'Latest AI Development & Industry News';
+        subtitleEl.textContent = 'Latest AI Development & Innovation';
     } else {
-        titleEl.textContent = '📈 Indian Stock Market';
-        subtitleEl.textContent = 'Latest Stock Market News & Updates';
+        titleEl.textContent = '📈 Stock Market News';
+        subtitleEl.textContent = 'Latest Indian Market Updates';
     }
 }
 
 function setupEventListeners() {
-    document.getElementById('refreshBtn').addEventListener('click', fetchNews);
+    document.getElementById('refreshBtn').addEventListener('click', () => fetchNews(true));
 }
 
-async function fetchNews() {
+async function fetchNews(forceRefresh = false) {
     const loadingEl = document.getElementById('loading');
     const loadingTextEl = document.getElementById('loadingText');
     const containerEl = document.getElementById('newsContainer');
@@ -61,13 +61,20 @@ async function fetchNews() {
 
     // Update loading text based on news type
     if (currentNewsType === 'ai') {
-        loadingTextEl.textContent = 'Loading latest AI news...';
+        loadingTextEl.textContent = forceRefresh ? 'Refreshing AI news...' : 'Loading latest AI news...';
     } else {
-        loadingTextEl.textContent = 'Loading latest stock market news...';
+        loadingTextEl.textContent = forceRefresh ? 'Refreshing stock market news...' : 'Loading latest stock market news...';
     }
 
     try {
-        const apiUrl = currentNewsType === 'ai' ? API_URL : STOCK_MARKET_API_URL;
+        // Use /refresh endpoint when forceRefresh is true
+        let apiUrl;
+        if (currentNewsType === 'ai') {
+            apiUrl = forceRefresh ? API_URL + '/refresh' : API_URL;
+        } else {
+            apiUrl = forceRefresh ? STOCK_MARKET_API_URL + '/refresh' : STOCK_MARKET_API_URL;
+        }
+
         const response = await fetch(apiUrl);
         if (!response.ok) {
             throw new Error('Failed to fetch news');
@@ -76,6 +83,11 @@ async function fetchNews() {
         currentArticles = await response.json();
         setupCategoryTabs(currentArticles);
         filterAndRenderNews();
+
+        // Log success on refresh
+        if (forceRefresh) {
+            console.log('News refreshed successfully at ' + new Date().toLocaleTimeString());
+        }
     } catch (error) {
         console.error('Error fetching news:', error);
         showError('Failed to load news. Please try again later.');
