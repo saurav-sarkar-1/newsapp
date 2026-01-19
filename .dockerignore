@@ -1,8 +1,13 @@
 target/
-.mvn/
-.mvn/wrapper/maven-wrapper.jar
-.idea/
-*.iml
 .git/
 .gitignore
+*.md
 README.md
+Procfile
+render.yaml
+fly.toml
+.idea/
+.vscode/
+*.iml
+.DS_Store
+
