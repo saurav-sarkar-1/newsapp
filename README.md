@@ -1,9 +1,17 @@
 # AI News App
 
-A Java Spring Boot application that fetches and displays the latest news about AI Development and Industry. The app shows news articles with summaries and provides links to the original sources.
+A Java Spring Boot application that fetches and displays the latest news about AI Development and Industry, as well as Indian Stock Market news. The app shows news articles with summaries and provides links to the original sources.
+
+## 🌐 Live Application
+
+**The app is now live and available at:** [https://ai-news-app-production.up.railway.app/](https://ai-news-app-production.up.railway.app/)
+
+You can access the application directly from your browser without any local setup!
 
 ## Features
 
+- ✅ **Two News Categories**: AI News and Indian Stock Market news
+- ✅ **Category Filtering**: Filter news by Product, Engineering, Strategy, Research, Industry, etc.
 - ✅ Fetches latest AI-related news from NewsAPI
 - ✅ Displays news articles with titles, summaries, and metadata
 - ✅ Shows article source, author, and publication date
@@ -84,9 +92,22 @@ java -jar target/ai-news-app-1.0.0.jar
 ## API Endpoints
 
 - `GET /api/news` - Get all AI news articles
-- `GET /api/news/refresh` - Refresh and get latest news
+- `GET /api/news/refresh` - Refresh and get latest AI news
+- `GET /api/news/stock-market` - Get Indian stock market news
+- `GET /api/news/stock-market/refresh` - Refresh Indian stock market news
 
 ## Usage
+
+### Using the Live Application
+
+1. **Access the Live App**: Visit [https://ai-news-app-production.up.railway.app/](https://ai-news-app-production.up.railway.app/)
+2. **Switch News Types**: Use the top tabs to switch between "🤖 AI News" and "📈 Indian Stock Market"
+3. **Filter by Category**: Click category tabs (Product, Engineering, Strategy, etc.) to filter news
+4. **View News**: The app automatically loads the latest news articles
+5. **Read Articles**: Click "Read Full Article →" to navigate to the original source
+6. **Refresh News**: Click the "🔄 Refresh News" button to get the latest articles
+
+### Running Locally
 
 1. **Access the Application**: Open your browser and navigate to `http://localhost:8081`
 2. **View News**: The app automatically loads the latest AI news articles
@@ -102,10 +123,15 @@ The app fetches news from various sources including:
 - MIT Technology Review
 - And many more tech and AI-focused publications
 
-## Query Parameters
+## News Queries
 
-The app searches for news using the following query:
+The app searches for news using the following queries:
+
+**AI News:**
 - "artificial intelligence OR AI development OR machine learning OR deep learning OR neural networks"
+
+**Indian Stock Market:**
+- "Indian stock market OR BSE OR NSE OR Sensex OR Nifty OR Indian stocks OR Indian equity market"
 
 ## Fallback Mode
 
@@ -164,6 +190,27 @@ mvn clean package
 ```
 
 This will create a JAR file in the `target` directory that can be run independently.
+
+## Deployment
+
+The application is deployed on **Railway** and is available at:
+- **Live URL**: [https://ai-news-app-production.up.railway.app/](https://ai-news-app-production.up.railway.app/)
+
+### Deployment Details
+
+- **Platform**: Railway.app
+- **Build Tool**: Maven (RAILPACK builder)
+- **Runtime**: Java 17
+- **Port**: Configured via Railway's PORT environment variable
+- **Status**: ✅ Live and running
+
+### Deployment Files
+
+- `railway.json` - Railway deployment configuration
+- `Dockerfile` - Alternative Docker-based deployment
+- `start.sh` - Startup script for finding and running the JAR
+
+For more details on deployment, see `DEPLOYMENT.md` and `RAILWAY_DEPLOY.md`.
 
 ## License
 
