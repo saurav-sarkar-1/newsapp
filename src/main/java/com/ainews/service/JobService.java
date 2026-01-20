@@ -36,7 +36,11 @@ public class JobService {
     private static final String REMOTEOK_API = "https://remoteok.com/api";
 
     public JobService() {
-        this.webClient = WebClient.builder().build();
+        this.webClient = WebClient.builder()
+            .codecs(configurer -> configurer
+                .defaultCodecs()
+                .maxInMemorySize(5 * 1024 * 1024)) // 5MB buffer (increased from default 256KB)
+            .build();
         this.objectMapper = new ObjectMapper();
     }
 
@@ -46,37 +50,51 @@ public class JobService {
     public List<JobPosting> getEnglishJobsInGermany() {
         List<JobPosting> allJobs = new ArrayList<>();
 
+        System.out.println("========================================");
+        System.out.println("Starting job fetch from multiple sources");
+        System.out.println("========================================");
+
         // Try fetching from multiple sources
         try {
             // Source 1: Adzuna API (if configured)
             if (adzunaApiId != null && !adzunaApiId.isEmpty()) {
+                System.out.println("Adzuna API ID configured: " + adzunaApiId);
+                System.out.println("Fetching from Adzuna API...");
                 List<JobPosting> adzunaJobs = fetchFromAdzuna();
                 if (adzunaJobs != null && !adzunaJobs.isEmpty()) {
+                    System.out.println("✅ Successfully fetched " + adzunaJobs.size() + " jobs from Adzuna");
                     allJobs.addAll(adzunaJobs);
+                } else {
+                    System.out.println("❌ Adzuna returned no jobs");
                 }
+            } else {
+                System.out.println("⚠️  Adzuna API not configured (ID: " + adzunaApiId + ")");
             }
 
             // Source 2: RemoteOK API
+            System.out.println("\nFetching from RemoteOK API...");
             List<JobPosting> remoteOkJobs = fetchFromRemoteOK();
             if (remoteOkJobs != null && !remoteOkJobs.isEmpty()) {
+                System.out.println("✅ Successfully fetched " + remoteOkJobs.size() + " jobs from RemoteOK");
                 allJobs.addAll(remoteOkJobs);
-            }
-
-            // Source 3: GitHub Jobs (deprecated but might still work)
-            List<JobPosting> githubJobs = fetchFromGitHub();
-            if (githubJobs != null && !githubJobs.isEmpty()) {
-                allJobs.addAll(githubJobs);
+            } else {
+                System.out.println("❌ RemoteOK returned no jobs");
             }
 
         } catch (Exception e) {
-            System.err.println("Error fetching jobs: " + e.getMessage());
+            System.err.println("❌ Error fetching jobs: " + e.getMessage());
+            e.printStackTrace();
         }
 
+        System.out.println("\n========================================");
+        System.out.println("Total jobs fetched from APIs: " + allJobs.size());
+        System.out.println("========================================\n");
+
         // If no jobs fetched from APIs, return sample data
-        if (allJobs.isEmpty()) {
-            System.out.println("Using sample job data for English jobs in Germany");
-            return getSampleJobs();
-        }
+//        if (allJobs.isEmpty()) {
+//            System.out.println("⚠️  No jobs from APIs, using sample job data");
+//            return getSampleJobs();
+//        }
 
         // Load comments for each job
         for (JobPosting job : allJobs) {
@@ -93,20 +111,35 @@ public class JobService {
      */
     private List<JobPosting> fetchFromAdzuna() {
         try {
+            // Broader search terms for more results - including data entry, admin, banking, education
+            String searchTerms = "english OR data entry OR administrative OR banking OR teacher OR office";
             String url = String.format(
-                "https://api.adzuna.com/v1/api/jobs/de/search/1?app_id=%s&app_key=%s&results_per_page=20&what=software%%20developer%%20OR%%20java%%20OR%%20python%%20OR%%20javascript&where=germany&content-type=application/json",
-                adzunaApiId, adzunaApiKey
+                "https://api.adzuna.com/v1/api/jobs/de/search/1?app_id=%s&app_key=%s&results_per_page=50&what=%s&content-type=application/json",
+                adzunaApiId, adzunaApiKey, java.net.URLEncoder.encode(searchTerms, "UTF-8")
             );
+
+            System.out.println("Fetching from Adzuna API...");
+            System.out.println("API URL (without credentials): https://api.adzuna.com/v1/api/jobs/de/search/1?results_per_page=50&what=" + searchTerms);
 
             String response = webClient.get()
                 .uri(url)
                 .retrieve()
                 .bodyToMono(String.class)
+                .timeout(java.time.Duration.ofSeconds(15))
                 .block();
 
-            return parseAdzunaResponse(response);
+            if (response == null || response.isEmpty()) {
+                System.err.println("Adzuna API returned empty response");
+                return null;
+            }
+
+            System.out.println("Adzuna API response received, length: " + response.length());
+            List<JobPosting> jobs = parseAdzunaResponse(response);
+            System.out.println("Adzuna API returned " + (jobs != null ? jobs.size() : 0) + " jobs");
+            return jobs;
         } catch (Exception e) {
-            System.err.println("Adzuna API error: " + e.getMessage());
+            System.err.println("Adzuna API error: " + e.getClass().getName() + " - " + e.getMessage());
+            e.printStackTrace();
             return null;
         }
     }
@@ -117,16 +150,33 @@ public class JobService {
      */
     private List<JobPosting> fetchFromRemoteOK() {
         try {
+            System.out.println("Attempting to fetch from RemoteOK API: " + REMOTEOK_API);
+
             String response = webClient.get()
                 .uri(REMOTEOK_API)
-                .header("User-Agent", "Mozilla/5.0")
+                .header("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36")
+                .header("Accept", "application/json")
                 .retrieve()
                 .bodyToMono(String.class)
+                .timeout(java.time.Duration.ofSeconds(15))
                 .block();
 
+            if (response == null || response.isEmpty()) {
+                System.err.println("RemoteOK API returned empty response");
+                return null;
+            }
+
+            System.out.println("RemoteOK API response received, length: " + response.length());
             return parseRemoteOKResponse(response);
+        } catch (org.springframework.core.io.buffer.DataBufferLimitException e) {
+            System.err.println("RemoteOK API error: Response too large (exceeded buffer limit)");
+            System.err.println("Note: RemoteOK returns a very large dataset. This is expected and the app will use other sources.");
+            return null;
         } catch (Exception e) {
-            System.err.println("RemoteOK API error: " + e.getMessage());
+            System.err.println("RemoteOK API error: " + e.getClass().getSimpleName() + " - " + e.getMessage());
+            if (e.getMessage() != null && e.getMessage().contains("buffer")) {
+                System.err.println("Note: Response size issue - falling back to other job sources");
+            }
             return null;
         }
     }
@@ -159,27 +209,44 @@ public class JobService {
         List<JobPosting> jobs = new ArrayList<>();
         try {
             JsonNode root = objectMapper.readTree(jsonResponse);
+
+            // Check for API errors
+            if (root.has("error")) {
+                System.err.println("Adzuna API error: " + root.get("error").asText());
+                return jobs;
+            }
+
             JsonNode resultsNode = root.get("results");
 
             if (resultsNode != null && resultsNode.isArray()) {
-                for (JsonNode jobNode : resultsNode) {
-                    JobPosting job = new JobPosting();
-                    job.setTitle(jobNode.path("title").asText("No title"));
-                    job.setCompany(jobNode.path("company").path("display_name").asText("Unknown Company"));
-                    job.setLocation(jobNode.path("location").path("display_name").asText("Germany"));
-                    job.setDescription(jobNode.path("description").asText(""));
-                    job.setUrl(jobNode.path("redirect_url").asText(""));
-                    job.setSalary(formatSalary(jobNode));
-                    job.setJobType(jobNode.path("contract_time").asText("Full-time"));
-                    job.setSource("Adzuna");
-                    job.setPostedAt(parseDate(jobNode.path("created").asText("")));
-                    job.setCategory(categorizeJob(job));
+                System.out.println("Adzuna returned " + resultsNode.size() + " results");
 
-                    jobs.add(job);
+                for (JsonNode jobNode : resultsNode) {
+                    try {
+                        JobPosting job = new JobPosting();
+                        job.setTitle(jobNode.path("title").asText("No title"));
+                        job.setCompany(jobNode.path("company").path("display_name").asText("Unknown Company"));
+                        job.setLocation(jobNode.path("location").path("display_name").asText("Germany"));
+                        job.setDescription(jobNode.path("description").asText(""));
+                        job.setUrl(jobNode.path("redirect_url").asText(""));
+                        job.setSalary(formatSalary(jobNode));
+                        job.setJobType(jobNode.path("contract_time").asText("Full-time"));
+                        job.setSource("Adzuna");
+                        job.setPostedAt(parseDate(jobNode.path("created").asText("")));
+                        job.setCategory(categorizeJob(job));
+
+                        jobs.add(job);
+                    } catch (Exception e) {
+                        System.err.println("Error parsing individual Adzuna job: " + e.getMessage());
+                    }
                 }
+                System.out.println("Successfully parsed " + jobs.size() + " jobs from Adzuna");
+            } else {
+                System.err.println("Adzuna response has no results array");
             }
         } catch (Exception e) {
             System.err.println("Error parsing Adzuna response: " + e.getMessage());
+            e.printStackTrace();
         }
         return jobs;
     }
@@ -193,44 +260,62 @@ public class JobService {
             JsonNode root = objectMapper.readTree(jsonResponse);
 
             if (root.isArray()) {
+                System.out.println("RemoteOK returned " + root.size() + " total results");
+                int germanJobs = 0;
+
                 for (JsonNode jobNode : root) {
-                    // Filter for Germany-related jobs
-                    String location = jobNode.path("location").asText("").toLowerCase();
-                    if (!location.contains("germany") && !location.contains("berlin") &&
-                        !location.contains("munich") && !location.contains("hamburg")) {
+                    // Skip the first element if it's metadata (RemoteOK API quirk)
+                    if (!jobNode.has("position")) {
                         continue;
                     }
 
-                    JobPosting job = new JobPosting();
-                    job.setTitle(jobNode.path("position").asText("No title"));
-                    job.setCompany(jobNode.path("company").asText("Unknown Company"));
-                    job.setLocation(jobNode.path("location").asText("Remote - Germany"));
-                    job.setDescription(jobNode.path("description").asText(""));
-                    job.setUrl(jobNode.path("url").asText(""));
-                    job.setJobType("Remote");
-                    job.setSource("RemoteOK");
-                    job.setLogoUrl(jobNode.path("company_logo").asText(""));
-
-                    // Parse tags as skills
-                    JsonNode tagsNode = jobNode.path("tags");
-                    if (tagsNode.isArray()) {
-                        List<String> skillsList = new ArrayList<>();
-                        for (JsonNode tag : tagsNode) {
-                            skillsList.add(tag.asText());
-                        }
-                        job.setSkills(skillsList.toArray(new String[0]));
+                    // Filter for Germany-related jobs
+                    String location = jobNode.path("location").asText("").toLowerCase();
+                    if (!location.contains("germany") && !location.contains("berlin") &&
+                        !location.contains("munich") && !location.contains("hamburg") &&
+                        !location.contains("frankfurt") && !location.contains("cologne")) {
+                        continue;
                     }
 
-                    job.setPostedAt(LocalDateTime.now().minusDays((int)(Math.random() * 7)));
-                    job.setCategory(categorizeJob(job));
+                    try {
+                        JobPosting job = new JobPosting();
+                        job.setTitle(jobNode.path("position").asText("No title"));
+                        job.setCompany(jobNode.path("company").asText("Unknown Company"));
+                        job.setLocation(jobNode.path("location").asText("Remote - Germany"));
+                        job.setDescription(jobNode.path("description").asText(""));
+                        job.setUrl(jobNode.path("url").asText(""));
+                        job.setJobType("Remote");
+                        job.setSource("RemoteOK");
+                        job.setLogoUrl(jobNode.path("company_logo").asText(""));
 
-                    jobs.add(job);
+                        // Parse tags as skills
+                        JsonNode tagsNode = jobNode.path("tags");
+                        if (tagsNode.isArray()) {
+                            List<String> skillsList = new ArrayList<>();
+                            for (JsonNode tag : tagsNode) {
+                                skillsList.add(tag.asText());
+                            }
+                            job.setSkills(skillsList.toArray(new String[0]));
+                        }
 
-                    if (jobs.size() >= 10) break; // Limit to 10 jobs from RemoteOK
+                        job.setPostedAt(LocalDateTime.now().minusDays((int)(Math.random() * 7)));
+                        job.setCategory(categorizeJob(job));
+
+                        jobs.add(job);
+                        germanJobs++;
+
+                        if (jobs.size() >= 15) break; // Limit to 15 jobs from RemoteOK
+                    } catch (Exception e) {
+                        System.err.println("Error parsing individual RemoteOK job: " + e.getMessage());
+                    }
                 }
+                System.out.println("Found " + germanJobs + " Germany-related jobs from RemoteOK");
+            } else {
+                System.err.println("RemoteOK response is not an array");
             }
         } catch (Exception e) {
             System.err.println("Error parsing RemoteOK response: " + e.getMessage());
+            e.printStackTrace();
         }
         return jobs;
     }
