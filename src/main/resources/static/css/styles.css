@@ -347,6 +347,26 @@ body {
     color: white;
 }
 
+.news-category.data-entry {
+    background-color: #00BCD4;
+    color: white;
+}
+
+.news-category.administrative {
+    background-color: #795548;
+    color: white;
+}
+
+.news-category.banking {
+    background-color: #009688;
+    color: white;
+}
+
+.news-category.education {
+    background-color: #FF5722;
+    color: white;
+}
+
 /* Comment Section Styles */
 .comment-section {
     margin-top: 20px;
@@ -453,6 +473,101 @@ body {
     }
 }
 
+/* Job Card Specific Styles */
+.job-card {
+    border-left: 4px solid #4CAF50;
+    background: linear-gradient(135deg, #ffffff 0%, #f8fff9 100%);
+}
+
+.company-logo {
+    width: 60px;
+    height: 60px;
+    object-fit: contain;
+    float: right;
+    margin-left: 15px;
+    margin-bottom: 10px;
+    border-radius: 8px;
+    background: white;
+    padding: 5px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.job-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.job-meta span {
+    font-size: 0.9rem;
+    color: #555;
+    display: flex;
+    align-items: center;
+}
+
+.job-company {
+    font-weight: 600;
+    color: #333;
+    font-size: 1rem;
+}
+
+.job-location {
+    color: #667eea;
+    font-weight: 500;
+}
+
+.job-type {
+    color: #4CAF50;
+    font-weight: 500;
+}
+
+.job-salary {
+    color: #FF9800;
+    font-weight: 600;
+}
+
+.job-experience {
+    color: #9C27B0;
+    font-weight: 500;
+}
+
+.job-source {
+    color: #999;
+    font-size: 0.85rem;
+}
+
+.job-skills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 15px 0;
+}
+
+.skill-tag {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 5px 12px;
+    border-radius: 15px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    box-shadow: 0 2px 4px rgba(102, 126, 234, 0.3);
+    transition: transform 0.2s ease;
+}
+
+.skill-tag:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(102, 126, 234, 0.4);
+}
+
+.job-apply-btn {
+    background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+}
+
+.job-apply-btn:hover {
+    box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
+}
+
 @media (max-width: 768px) {
     .app-header h1 {
         font-size: 2rem;
@@ -497,5 +612,30 @@ body {
 
     .comment-input {
         font-size: 16px; /* Prevent zoom on iOS */
+    }
+
+    .company-logo {
+        width: 50px;
+        height: 50px;
+        margin-bottom: 5px;
+    }
+
+    .job-meta {
+        font-size: 0.85rem;
+    }
+
+    .job-skills {
+        gap: 6px;
+    }
+
+    .skill-tag {
+        font-size: 0.75rem;
+        padding: 4px 10px;
+    }
+
+    .top-tab {
+        padding: 10px 15px;
+        font-size: 0.9rem;
+        min-width: 120px;
     }
 }

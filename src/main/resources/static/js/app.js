@@ -1,9 +1,10 @@
 const API_URL = '/api/news';
 const STOCK_MARKET_API_URL = '/api/news/stock-market';
+const JOBS_API_URL = '/api/news/jobs/germany';
 
 let currentArticles = [];
 let selectedCategory = 'All';
-let currentNewsType = 'ai'; // 'ai' or 'stock-market'
+let currentNewsType = 'ai'; // 'ai', 'stock-market', or 'jobs'
 
 // Initialize app
 document.addEventListener('DOMContentLoaded', () => {
@@ -40,9 +41,12 @@ function updateHeader(newsType) {
     if (newsType === 'ai') {
         titleEl.textContent = '🤖 AI News';
         subtitleEl.textContent = 'Latest AI Development & Innovation';
-    } else {
+    } else if (newsType === 'stock-market') {
         titleEl.textContent = '📈 Stock Market News';
         subtitleEl.textContent = 'Latest Indian Market Updates';
+    } else if (newsType === 'jobs') {
+        titleEl.textContent = '💼 Jobs in Germany';
+        subtitleEl.textContent = 'English-Speaking Job Opportunities';
     }
 }
 
@@ -62,8 +66,10 @@ async function fetchNews(forceRefresh = false) {
     // Update loading text based on news type
     if (currentNewsType === 'ai') {
         loadingTextEl.textContent = forceRefresh ? 'Refreshing AI news...' : 'Loading latest AI news...';
-    } else {
+    } else if (currentNewsType === 'stock-market') {
         loadingTextEl.textContent = forceRefresh ? 'Refreshing stock market news...' : 'Loading latest stock market news...';
+    } else if (currentNewsType === 'jobs') {
+        loadingTextEl.textContent = forceRefresh ? 'Refreshing job listings...' : 'Loading job opportunities...';
     }
 
     try {
@@ -71,26 +77,34 @@ async function fetchNews(forceRefresh = false) {
         let apiUrl;
         if (currentNewsType === 'ai') {
             apiUrl = forceRefresh ? API_URL + '/refresh' : API_URL;
-        } else {
+        } else if (currentNewsType === 'stock-market') {
             apiUrl = forceRefresh ? STOCK_MARKET_API_URL + '/refresh' : STOCK_MARKET_API_URL;
+        } else if (currentNewsType === 'jobs') {
+            apiUrl = forceRefresh ? JOBS_API_URL + '/refresh' : JOBS_API_URL;
         }
 
         const response = await fetch(apiUrl);
         if (!response.ok) {
-            throw new Error('Failed to fetch news');
+            throw new Error('Failed to fetch data');
         }
         
         currentArticles = await response.json();
         setupCategoryTabs(currentArticles);
-        filterAndRenderNews();
+
+        // Render based on content type
+        if (currentNewsType === 'jobs') {
+            filterAndRenderJobs();
+        } else {
+            filterAndRenderNews();
+        }
 
         // Log success on refresh
         if (forceRefresh) {
-            console.log('News refreshed successfully at ' + new Date().toLocaleTimeString());
+            console.log('Content refreshed successfully at ' + new Date().toLocaleTimeString());
         }
     } catch (error) {
-        console.error('Error fetching news:', error);
-        showError('Failed to load news. Please try again later.');
+        console.error('Error fetching data:', error);
+        showError('Failed to load content. Please try again later.');
     } finally {
         loadingEl.style.display = 'none';
     }
@@ -122,7 +136,13 @@ function setupCategoryTabs(articles) {
             selectedCategory = tab.dataset.category;
             tabsContainer.querySelectorAll('.category-tab').forEach(t => t.classList.remove('active'));
             tab.classList.add('active');
-            filterAndRenderNews();
+
+            // Render based on content type
+            if (currentNewsType === 'jobs') {
+                filterAndRenderJobs();
+            } else {
+                filterAndRenderNews();
+            }
         });
     });
 }
@@ -217,6 +237,96 @@ function createNewsCard(article) {
                         💾 Save Comment
                     </button>
                     <button onclick="clearComment('${escapeHtml(articleUrl)}', '${commentId}')" class="clear-comment-btn">
+                        🗑️ Clear
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+// Job rendering functions
+function filterAndRenderJobs() {
+    const filteredJobs = selectedCategory === 'All'
+        ? currentArticles
+        : currentArticles.filter(job => (job.category || 'General') === selectedCategory);
+    renderJobs(filteredJobs);
+}
+
+function renderJobs(jobs) {
+    const container = document.getElementById('newsContainer');
+
+    if (!jobs || jobs.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <p>No job postings found in this category. Try selecting a different category.</p>
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = jobs.map(job => createJobCard(job)).join('');
+}
+
+function createJobCard(job) {
+    const postedDate = job.postedAt
+        ? formatDate(job.postedAt)
+        : 'Recently posted';
+
+    const skills = job.skills && job.skills.length > 0
+        ? `<div class="job-skills">
+             ${job.skills.map(skill => `<span class="skill-tag">${escapeHtml(skill)}</span>`).join('')}
+           </div>`
+        : '';
+
+    const category = job.category || 'General';
+    const categoryClass = category.toLowerCase().replace(/\s+/g, '-');
+
+    const commentId = 'comment-' + btoa(job.url || '').replace(/[^a-zA-Z0-9]/g, '');
+    const comments = job.comments || '';
+
+    const logo = job.logoUrl && job.logoUrl.trim() !== ''
+        ? `<img src="${escapeHtml(job.logoUrl)}" alt="${escapeHtml(job.company)}" class="company-logo" onerror="this.style.display='none'">`
+        : '';
+
+    return `
+        <div class="news-card job-card">
+            ${logo}
+            <span class="news-category ${categoryClass}">${escapeHtml(category)}</span>
+            <div class="news-header">
+                <h2 class="news-title">${escapeHtml(job.title)}</h2>
+                <div class="job-meta">
+                    <span class="job-company">🏢 ${escapeHtml(job.company || 'Unknown Company')}</span>
+                    <span class="job-location">📍 ${escapeHtml(job.location || 'Germany')}</span>
+                    <span class="job-type">💼 ${escapeHtml(job.jobType || 'Full-time')}</span>
+                    ${job.salary ? `<span class="job-salary">💰 ${escapeHtml(job.salary)}</span>` : ''}
+                    ${job.experienceLevel ? `<span class="job-experience">📊 ${escapeHtml(job.experienceLevel)}</span>` : ''}
+                    <span class="news-date">📅 ${postedDate}</span>
+                    <span class="job-source">🔗 ${escapeHtml(job.source || 'Job Board')}</span>
+                </div>
+            </div>
+            <div class="news-summary">${escapeHtml((job.description || 'No description available').substring(0, 300))}${job.description && job.description.length > 300 ? '...' : ''}</div>
+            ${skills}
+            <a href="${job.url || '#'}" target="_blank" rel="noopener noreferrer" class="news-link job-apply-btn">
+                📝 Apply Now →
+            </a>
+
+            <div class="comment-section">
+                <label class="comment-label" for="${commentId}">
+                    💬 Add Your Notes/Comments:
+                </label>
+                <textarea
+                    id="${commentId}"
+                    class="comment-input"
+                    placeholder="Add notes about this job opportunity (e.g., application status, contacts, research)..."
+                    rows="3"
+                    data-url="${escapeHtml(job.url || '')}"
+                >${escapeHtml(comments)}</textarea>
+                <div class="comment-actions">
+                    <button onclick="saveComment('${escapeHtml(job.url || '')}', '${commentId}')" class="save-comment-btn">
+                        💾 Save Comment
+                    </button>
+                    <button onclick="clearComment('${escapeHtml(job.url || '')}', '${commentId}')" class="clear-comment-btn">
                         🗑️ Clear
                     </button>
                 </div>

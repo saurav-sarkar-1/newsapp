@@ -1,8 +1,10 @@
 package com.ainews.controller;
 
 import com.ainews.dto.CommentRequest;
+import com.ainews.model.JobPosting;
 import com.ainews.model.NewsArticle;
 import com.ainews.repository.CommentRepository;
+import com.ainews.service.JobService;
 import com.ainews.service.NewsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -15,11 +17,13 @@ import java.util.List;
 @CrossOrigin(origins = "*")
 public class NewsController {
     private final NewsService newsService;
+    private final JobService jobService;
     private final CommentRepository commentRepository;
 
     @Autowired
-    public NewsController(NewsService newsService, CommentRepository commentRepository) {
+    public NewsController(NewsService newsService, JobService jobService, CommentRepository commentRepository) {
         this.newsService = newsService;
+        this.jobService = jobService;
         this.commentRepository = commentRepository;
     }
 
@@ -78,5 +82,18 @@ public class NewsController {
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body("Failed to delete comment: " + e.getMessage());
         }
+    }
+
+    // Job endpoints
+    @GetMapping("/jobs/germany")
+    public ResponseEntity<List<JobPosting>> getGermanyJobs() {
+        List<JobPosting> jobs = jobService.getEnglishJobsInGermany();
+        return ResponseEntity.ok(jobs);
+    }
+
+    @GetMapping("/jobs/germany/refresh")
+    public ResponseEntity<List<JobPosting>> refreshGermanyJobs() {
+        List<JobPosting> jobs = jobService.getEnglishJobsInGermany();
+        return ResponseEntity.ok(jobs);
     }
 }
