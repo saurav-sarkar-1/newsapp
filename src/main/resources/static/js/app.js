@@ -182,6 +182,10 @@ function createNewsCard(article) {
             </div>`;
     }
 
+    // Create a unique ID for the comment textarea
+    const commentId = 'comment-' + btoa(articleUrl).replace(/[^a-zA-Z0-9]/g, '');
+    const comments = article.comments || '';
+
     return `
         <div class="news-card">
             ${image}
@@ -196,6 +200,27 @@ function createNewsCard(article) {
             <div class="news-summary">${escapeHtml(article.summary || article.description || 'No summary available')}</div>
             ${author}
             ${linkHtml}
+
+            <div class="comment-section">
+                <label class="comment-label" for="${commentId}">
+                    💬 Add Your Notes/Comments:
+                </label>
+                <textarea
+                    id="${commentId}"
+                    class="comment-input"
+                    placeholder="Add your personal notes or comments about this article..."
+                    rows="3"
+                    data-url="${escapeHtml(articleUrl)}"
+                >${escapeHtml(comments)}</textarea>
+                <div class="comment-actions">
+                    <button onclick="saveComment('${escapeHtml(articleUrl)}', '${commentId}')" class="save-comment-btn">
+                        💾 Save Comment
+                    </button>
+                    <button onclick="clearComment('${escapeHtml(articleUrl)}', '${commentId}')" class="clear-comment-btn">
+                        🗑️ Clear
+                    </button>
+                </div>
+            </div>
         </div>
     `;
 }
@@ -244,3 +269,105 @@ function showError(message) {
         </div>
     `;
 }
+
+// Comment Management Functions
+async function saveComment(articleUrl, commentId) {
+    const commentTextarea = document.getElementById(commentId);
+    if (!commentTextarea) {
+        console.error('Comment textarea not found:', commentId);
+        return;
+    }
+
+    const comment = commentTextarea.value.trim();
+
+    try {
+        const response = await fetch('/api/news/comments', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                articleUrl: articleUrl,
+                comment: comment
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to save comment');
+        }
+
+        const message = await response.text();
+
+        // Show success feedback
+        showTemporaryMessage(commentTextarea, '✅ Comment saved!', 'success');
+
+        console.log('Comment saved successfully for:', articleUrl);
+    } catch (error) {
+        console.error('Error saving comment:', error);
+        showTemporaryMessage(commentTextarea, '❌ Failed to save comment', 'error');
+    }
+}
+
+async function clearComment(articleUrl, commentId) {
+    const commentTextarea = document.getElementById(commentId);
+    if (!commentTextarea) {
+        console.error('Comment textarea not found:', commentId);
+        return;
+    }
+
+    if (commentTextarea.value.trim() === '') {
+        return; // Nothing to clear
+    }
+
+    if (!confirm('Are you sure you want to clear this comment?')) {
+        return;
+    }
+
+    try {
+        // Clear the textarea
+        commentTextarea.value = '';
+
+        // Delete from backend
+        const response = await fetch(`/api/news/comments?url=${encodeURIComponent(articleUrl)}`, {
+            method: 'DELETE'
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to delete comment');
+        }
+
+        showTemporaryMessage(commentTextarea, '✅ Comment cleared!', 'success');
+
+        console.log('Comment deleted successfully for:', articleUrl);
+    } catch (error) {
+        console.error('Error deleting comment:', error);
+        showTemporaryMessage(commentTextarea, '❌ Failed to clear comment', 'error');
+    }
+}
+
+function showTemporaryMessage(element, message, type) {
+    // Create a message element
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `comment-feedback ${type}`;
+    messageDiv.textContent = message;
+    messageDiv.style.cssText = `
+        margin-top: 8px;
+        padding: 8px 12px;
+        border-radius: 4px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        background-color: ${type === 'success' ? '#4CAF50' : '#f44336'};
+        color: white;
+        animation: fadeIn 0.3s ease-in;
+    `;
+
+    // Insert after the textarea
+    element.parentNode.insertBefore(messageDiv, element.nextSibling);
+
+    // Remove after 3 seconds
+    setTimeout(() => {
+        messageDiv.style.animation = 'fadeOut 0.3s ease-out';
+        setTimeout(() => messageDiv.remove(), 300);
+    }, 3000);
+}
+

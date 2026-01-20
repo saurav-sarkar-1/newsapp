@@ -1,8 +1,10 @@
 package com.ainews.service;
 
 import com.ainews.model.NewsArticle;
+import com.ainews.repository.CommentRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -17,6 +19,9 @@ import java.util.List;
 public class NewsService {
     private final WebClient webClient;
     private final ObjectMapper objectMapper;
+
+    @Autowired
+    private CommentRepository commentRepository;
 
     @Value("${news.api.key:${NEWS_API_KEY:your-api-key-here}}")
     private String apiKey;
@@ -119,6 +124,10 @@ public class NewsService {
                     } else {
                         article.setCategory(categorizeStockMarketArticle(article));
                     }
+
+                    // Load saved comment for this article
+                    String savedComment = commentRepository.getComment(article.getUrl());
+                    article.setComments(savedComment != null ? savedComment : "");
 
                     articles.add(article);
                 }

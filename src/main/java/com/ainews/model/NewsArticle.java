@@ -13,6 +13,7 @@ public class NewsArticle {
     private LocalDateTime publishedAt;
     private String summary;
     private String category;
+    private String comments;
 
     public NewsArticle() {
     }
@@ -110,5 +111,13 @@ public class NewsArticle {
 
     public void setCategory(String category) {
         this.category = category;
+    }
+
+    public String getComments() {
+        return comments;
+    }
+
+    public void setComments(String comments) {
+        this.comments = comments;
     }
 }
